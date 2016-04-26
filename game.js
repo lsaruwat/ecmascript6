@@ -20,6 +20,7 @@ class Paddle extends Block{
 		super(x,y,width,height, color);
 		this.moveIncrement = moveIncrement;
 		this.valueToMove = 0; //this gets changed based on arrow keys to either a positive or negative amount
+		this.multiplier = 1;
 	}
 
 
@@ -37,6 +38,9 @@ class Ball{
 		this.moveIncrement = 3;
 		this.dx = this.moveIncrement;
 		this.dy = -this.moveIncrement;
+		//cos(angle*(pi/180))*velocity
+		//sin(angle*(pi/180))*velocity
+		this.radians = Math.cos(this.angle*(Math.PI / 180) ) * this.dy/this.dx;
 	}
 
 }
@@ -163,6 +167,18 @@ class Breakout extends Game{
 	}
 
 	paddleHit(){
+		let middle  = this.paddle.x+this.paddle.width/2;
+		let begin  = this.paddle.x;
+		let end = this.paddle.x + this.paddle.width;
+		this.ball.multiplier = this.paddle.width / (middle - begin);
+		
+		if(this.ball.x < this.paddle.x+this.paddle.width/2){
+			this.ball.dx = -this.ball.moveIncrement * this.ball.multiplier;
+		}
+		else {
+			this.ball.dx = this.ball.moveIncrement * this.ball.multiplier;
+		}
+
 		this.ball.dy = -this.ball.dy;
 	}
 
@@ -170,8 +186,12 @@ class Breakout extends Game{
 		let block = this.blocks[this.collisionBlock];
 		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
 		this.blocks.splice(this.collisionBlock, 1);
-		this.ball.dx = -this.ball.dx;
+		//this.ball.dx = -this.ball.dx;
 		this.ball.dy = -this.ball.dy;
+
+		if(this.blocks.length <= 0){
+			this.gameOver();
+		}
 		
 	}
 
@@ -206,6 +226,11 @@ class Breakout extends Game{
 		this.setBallInMotion();
 	}
 
+	gameOver(){
+		window.alert("Congratulations Mother Fucker!");
+		this.initialize();
+	}
+
 
 }
 
@@ -217,7 +242,20 @@ class Madness extends Breakout{
 	}
 
 	paddleHit(){
+		let middle  = this.paddle.x+this.paddle.width/2;
+		let begin  = this.paddle.x;
+		let end = this.paddle.x + this.paddle.width;
+		this.ball.multiplier = this.paddle.width / (middle - begin);
+		
+		if(this.ball.x < this.paddle.x+this.paddle.width/2){
+			this.ball.dx = -this.ball.moveIncrement * this.ball.multiplier;
+		}
+		else {
+			this.ball.dx = this.ball.moveIncrement * this.ball.multiplier;
+		}
+
 		this.ball.dy = -this.ball.dy;
+		
 		this.ball.dy*=1.1;
 		this.ball.dx*=1.1;
 	}
@@ -226,8 +264,12 @@ class Madness extends Breakout{
 		let block = this.blocks[this.collisionBlock];
 		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
 		this.blocks.splice(this.collisionBlock, 1);
-		this.ball.dx = -this.ball.dx;
+		//this.ball.dx = -this.ball.dx;
 		this.ball.dy = -this.ball.dy;
+
+		if(this.blocks.length <= 0){
+			this.gameover();
+		}
 		
 	}
 }
