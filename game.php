@@ -22,7 +22,7 @@ $(document).ready(function(){
 	var madness = new Madness();
 	console.log(madness.toString());
 	madness.initialize();
-	setInterval(madness.updateBall,10);
+	//setInterval(function(){madness.updateBall();},10);
 })
 
 

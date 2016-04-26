@@ -72,10 +72,13 @@ class Breakout extends Game{
 		super(); // call the next level up constructor
 		this.gameName = "Breakout";
 		this.ball = null;
+		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20);
+		this.ball = new Ball(this.gameWidth/2, this.gameHeight-10, 10, 0, Math.PI*2);
 		this.setKeyListeners();
 	}
 
 	routeKeys(e){
+		console.log(this.paddle);
 		if(e.keyCode == 39) {
         	this.paddle.x += this.paddle.moveIncrement;
         	this.drawBlock(this.paddle);
@@ -87,7 +90,7 @@ class Breakout extends Game{
 	}
 
 	setKeyListeners(){
-		window.addEventListener("keydown", this.routeKeys, false);
+		window.addEventListener("keydown", this.routeKeys.bind(this), false);
 	}
 
 	drawBlock(block){
@@ -114,6 +117,10 @@ class Breakout extends Game{
 		this.drawBall(this.ball);
 	}
 
+	setBallInMotion(){
+		window.setInterval(this.updateBall.bind(this), 10);
+	}
+
 	updatePaddle(){
 		if(this.paddle.x < 0 + this.paddle.width/2) this.paddle.x = 0+this.paddle.width/2;
 		else if(this.paddle.x > this.gameWidth - this.paddle.width/2) this.paddle.x = this.gameWidth - this.paddle.width/2;
@@ -131,12 +138,8 @@ class Breakout extends Game{
 			}
 		}
 
-		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20);
 		this.drawBlock(this.paddle);
-
-		this.ball = new Ball(this.gameWidth/2, this.gameHeight-10, 10, 0, Math.PI*2);
-		//this.drawBall(this.ball);
-		//this.setBallInMotion();
+		this.setBallInMotion();
 	}
 
 
