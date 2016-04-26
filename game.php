@@ -19,7 +19,9 @@
 $(document).ready(function(){
 	var breakout = new Breakout();
 	console.log(breakout.toString());
-	breakout.initialize();
+	breakout.user.setName("Logan Saruwatari");
+	breakout.populateBlocks();
+	breakout.startBall();
 	
 	// var madness = new Madness();
 	// console.log(madness.toString());

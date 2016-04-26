@@ -43,6 +43,33 @@ class Ball{
 		this.radians = Math.cos(this.angle*(Math.PI / 180) ) * this.dy/this.dx;
 	}
 
+
+}
+
+
+class User{
+	
+	constructor(){
+		this.name ="John Doe";
+		this.lives = 5;
+		this.score = 0;
+	}
+
+	setName(name){
+		this.name = name;
+	}
+
+	getName(){
+		return this.name;
+	}
+
+	addLives(lives){
+		this.lives += lives;
+	}
+
+	toString(){
+		return this.name + " " + this.lives;
+	}
 }
 
 class Game {
@@ -55,6 +82,9 @@ class Game {
   	this.gameHeight = window.innerHeight;
   	this.gameWidth = window.innerWidth;
   	this.createCanvas(this.gameWidth, this.gameHeight);
+  	this.user = new User();
+  	this.user.score = 0;
+  	
   }
 
   createCanvas(width, height, element=$("body")[0] ){
@@ -80,12 +110,24 @@ class Breakout extends Game{
 	constructor(){
 		super(); // call the next level up constructor
 		this.gameName = "Breakout";
-		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
-		this.ball = new Ball(this.gameWidth/2, this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2);
 		this.blocks = [];
 		this.collisionBlock = null;
+		this.intervalId = null;
 		this.setKeyListeners();
 		this.setMouseListeners();
+
+	}
+
+	setCanvasText(family, size){
+		this.ctx.font = size + "px " + family;
+	}
+
+	updateText(){
+		this.ctx.clearRect(0, 0, 300, 55);
+		this.ctx.clearRect(this.gameWidth-110, 0, 110, 55);
+		this.ctx.font = "30px Helvetica";
+		this.ctx.strokeText("Score: " + this.user.score ,10,50);
+		this.ctx.strokeText("Lives: " + this.user.lives ,this.gameWidth-110,50);
 	}
 
 	routeKeys(e){
@@ -106,11 +148,12 @@ class Breakout extends Game{
 	}
 
 	setKeyListeners(){
+
 		this.addEventListener("keydown", this.routeKeys, false);
 	}
 
 	setMouseListeners(){
-		//.addEventListener("mousemove", this.followMouse.bind(this), false);
+
 		this.addEventListener("mousemove", this.followMouse, false);
 	}
 
@@ -135,13 +178,22 @@ class Breakout extends Game{
 
 		if(this.ball.x < 0 || this.ball.x > this.gameWidth)this.ball.dx = -this.ball.dx; // change direction if a wall is hit
 		if(this.ball.y < 0)this.ball.dy = -this.ball.dy; // change direction if a wall is hit
+		
 		else if(this.paddleCollision())this.paddleHit();
-		else if(this.blockCollision())this.blockHit();
+		
+		else if(this.blockCollision()){
+			this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+			this.drawBlock(this.paddle);
+			this.blockHit();
+		}
+
+		else if(this.ball.y -this.ball.radius > this.gameHeight)this.die();
 			
-		this.ctx.clearRect(this.ball.x-this.ball.radius-1, this.ball.y-this.ball.radius-1, this.ball.radius*2+1, this.ball.radius*2+1);
+		this.ctx.clearRect(this.ball.x-this.ball.radius-1, this.ball.y-this.ball.radius-1, this.ball.radius*2+2, this.ball.radius*2+2);
 		this.ball.x +=this.ball.dx;
 		this.ball.y +=this.ball.dy;
 		this.drawBall(this.ball);
+		this.updateText();
 	}
 
 	paddleCollision(){
@@ -154,8 +206,8 @@ class Breakout extends Game{
 	blockCollision(){
 		for (let [i,block] of this.blocks.entries()) {// ecma script foreach style iterator
 			
-			let isXAligned = (this.ball.x > block.x && this.ball.x < block.x + block.width);
-			let isYAligned = (this.ball.y > block.y && this.ball.y < block.y + block.height);
+			let isXAligned = (this.ball.x+this.ball.radius > block.x && this.ball.x-this.ball.radius < block.x + block.width);
+			let isYAligned = (this.ball.y+this.ball.radius > block.y && this.ball.y-this.ball.radius < block.y + block.height);
 			if(isXAligned && isYAligned) {
 				this.collisionBlock = i;
 				return true;
@@ -167,15 +219,18 @@ class Breakout extends Game{
 	}
 
 	paddleHit(){
+
 		let middle  = this.paddle.x+this.paddle.width/2;
 		let begin  = this.paddle.x;
 		let end = this.paddle.x + this.paddle.width;
-		this.ball.multiplier = this.paddle.width / (middle - begin);
+		 //- (middle - begin);
 		
 		if(this.ball.x < this.paddle.x+this.paddle.width/2){
+			this.ball.multiplier = (this.ball.x-this.paddle.x + this.paddle.width/2)/(this.paddle.width/1.5);
 			this.ball.dx = -this.ball.moveIncrement * this.ball.multiplier;
 		}
 		else {
+			this.ball.multiplier = (this.ball.x-this.paddle.x)/(this.paddle.width/1.5);
 			this.ball.dx = this.ball.moveIncrement * this.ball.multiplier;
 		}
 
@@ -183,24 +238,29 @@ class Breakout extends Game{
 	}
 
 	blockHit(){
+		this.user.score +=1;
 		let block = this.blocks[this.collisionBlock];
 		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
 		this.blocks.splice(this.collisionBlock, 1);
-		//this.ball.dx = -this.ball.dx;
 		this.ball.dy = -this.ball.dy;
 
 		if(this.blocks.length <= 0){
-			this.gameOver();
-		}
-		
+			this.won();
+		}	
 	}
 
 	setBallInMotion(){
-		window.setInterval(this.updateBall.bind(this), 10);
+
+		this.intervalId = window.setInterval(this.updateBall.bind(this), 10);
+	}
+
+	removeInterval(){
+		//remove the interval so we can rebind on restart
+		window.clearInterval(this.intervalId);
 	}
 
 	updatePaddle(){
-		this.ctx.clearRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
 		
 		if(this.paddle.x < this.paddle.width/2) this.paddle.x = this.paddle.width/2;
 		else if(this.paddle.x > this.gameWidth - this.paddle.width) this.paddle.x = this.gameWidth - this.paddle.width;
@@ -212,25 +272,49 @@ class Breakout extends Game{
 
 	}
 
+	die(){
+		if(this.user.lives > 0){
 
-	initialize(){
-		for(let i=0; i<this.gameWidth; i+=this.gameWidth/10){
-			for(let j=0; j<this.gameHeight/3; j+=this.gameHeight/10){
-
-				this.blocks.push(new Block(i,j, this.gameWidth/20, this.gameHeight/30) );
-				this.drawBlock(this.blocks[this.blocks.length-1]);
-			}
+		this.user.addLives(-1);
+		this.removeInterval();
+		this.startBall();
 		}
+		else this.lost();
+	}
+
+	startBall(){
+		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
+		this.ball = new Ball(Math.floor(Math.random()*this.gameWidth), this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2);
+		this.setKeyListeners();
+		this.setMouseListeners();
+
 
 		this.drawBlock(this.paddle);
 		this.setBallInMotion();
 	}
 
-	gameOver(){
-		window.alert("Congratulations Mother Fucker!");
-		this.initialize();
+	populateBlocks(color="green"){
+		for(let i=0; i<this.gameWidth; i+=this.gameWidth/20){
+			for(let j=this.gameHeight/10; j<this.gameHeight/3; j+=this.gameHeight/20){
+
+				this.blocks.push(new Block(i,j, this.gameWidth/30, this.gameHeight/50) );
+				this.drawBlock(this.blocks[this.blocks.length-1]);
+			}
+		}
 	}
 
+	won(){
+		window.alert("Congratulations " + this.user.name);
+		this.removeInterval();
+		this.populateBlocks();
+		this.startBall();
+	}
+
+	lost(){
+		window.alert("Game Over " + this.user.name + " lives " + this.user.lives);
+		this.ball.y = 0;
+		location.reload();
+	}
 
 }
 
