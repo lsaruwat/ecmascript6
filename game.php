@@ -17,12 +17,13 @@
 <script type="text/javascript">
 
 $(document).ready(function(){
-	//doStuff();
-	//var breakout = new Breakout();
-	var madness = new Madness();
-	console.log(madness.toString());
-	madness.initialize();
-	//setInterval(function(){madness.updateBall();},10);
+	var breakout = new Breakout();
+	console.log(breakout.toString());
+	breakout.initialize();
+	
+	// var madness = new Madness();
+	// console.log(madness.toString());
+	// madness.initialize();
 })
 
 

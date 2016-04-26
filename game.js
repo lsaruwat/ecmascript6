@@ -16,10 +16,10 @@ class Block{
 
 class Paddle extends Block{
 
-	constructor(x,y,width,height, color="purple"){
+	constructor(x,y,width,height, moveIncrement, color="purple"){
 		super(x,y,width,height, color);
-		this.moveIncrement = 5;
-		this.valueToMove = 0;
+		this.moveIncrement = moveIncrement;
+		this.valueToMove = 0; //this gets changed based on arrow keys to either a positive or negative amount
 	}
 
 
@@ -34,8 +34,9 @@ class Ball{
 		this.a = a;
 		this.b = b;
 		this.color = color;
-		this.dx = 5;
-		this.dy = -5;
+		this.moveIncrement = 3;
+		this.dx = this.moveIncrement;
+		this.dy = -this.moveIncrement;
 	}
 
 }
@@ -72,20 +73,23 @@ class Breakout extends Game{
 		super(); // call the next level up constructor
 		this.gameName = "Breakout";
 		this.ball = null;
-		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20);
-		this.ball = new Ball(this.gameWidth/2, this.gameHeight-10, 10, 0, Math.PI*2);
+		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
+		this.ball = new Ball(this.gameWidth/2, this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2);
 		this.setKeyListeners();
+		console.log(this.paddle.y);
+		console.log(this.gameHeight);
+		console.log(this.paddle.x);
 	}
 
 	routeKeys(e){
 		console.log(this.paddle);
 		if(e.keyCode == 39) {
-        	this.paddle.x += this.paddle.moveIncrement;
-        	this.drawBlock(this.paddle);
+        	this.paddle.valueToMove = this.paddle.moveIncrement;
+        	this.updatePaddle(this.paddle);
     	}
     	else if(e.keyCode == 37) {
-        	this.paddle.x += -this.paddle.moveIncrement;
-        	this.drawBlock(this.paddle);
+        	this.paddle.valueToMove = -this.paddle.moveIncrement;
+        	this.updatePaddle(this.paddle);
     	}
 	}
 
@@ -110,11 +114,20 @@ class Breakout extends Game{
 	}
 
 	updateBall(){
+		var isXAligned = (this.ball.x > this.paddle.x && this.ball.x < this.paddle.x + this.paddle.width);
+		var isYAligned = (this.ball.y > this.paddle.y-this.ball.moveIncrement)
 		if(this.ball.x < 0 || this.ball.x > this.gameWidth)this.ball.dx = -this.ball.dx; // change direction if a wall is hit
-		if(this.ball.y < 0 || this.ball.y > this.gameHeight)this.ball.dy = -this.ball.dy; // change direction if a wall is hit
+		if(this.ball.y < 0)this.ball.dy = -this.ball.dy; // change direction if a wall is hit
+		if(isXAligned && isYAligned)this.paddleHit();
+			
+		this.ctx.clearRect(this.ball.x-this.ball.radius, this.ball.y-this.ball.radius, this.ball.radius*2, this.ball.radius*2);
 		this.ball.x +=this.ball.dx;
 		this.ball.y +=this.ball.dy;
 		this.drawBall(this.ball);
+	}
+
+	paddleHit(){
+		this.ball.dy = -this.ball.dy;
 	}
 
 	setBallInMotion(){
@@ -122,9 +135,15 @@ class Breakout extends Game{
 	}
 
 	updatePaddle(){
-		if(this.paddle.x < 0 + this.paddle.width/2) this.paddle.x = 0+this.paddle.width/2;
-		else if(this.paddle.x > this.gameWidth - this.paddle.width/2) this.paddle.x = this.gameWidth - this.paddle.width/2;
-		else this.paddle.x += this.paddle.valueToMove;
+		this.ctx.clearRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+		
+		if(this.paddle.x < this.paddle.width/2) this.paddle.x = this.paddle.width/2;
+		else if(this.paddle.x > this.gameWidth - this.paddle.width) this.paddle.x = this.gameWidth - this.paddle.width;
+		else {
+			this.paddle.x += this.paddle.valueToMove;
+		}
+		
+		this.drawBlock(this.paddle);
 
 	}
 
@@ -150,6 +169,12 @@ class Madness extends Breakout{
 	constructor(){
 		super();
 		this.gameName = "Madness";
+	}
+
+	paddleHit(){
+		this.ball.dy = -this.ball.dy;
+		this.ball.dy*=1.1;
+		this.ball.dx*=1.1;
 	}
 }
 
