@@ -65,6 +65,10 @@ class Game {
   	return this.gameName;
   }
 
+  addEventListener(domEvent, functionRef, bubbles=false){
+  	window.addEventListener(domEvent, functionRef.bind(this), bubbles);
+  }
+
 }
 
 class Breakout extends Game{
@@ -72,17 +76,15 @@ class Breakout extends Game{
 	constructor(){
 		super(); // call the next level up constructor
 		this.gameName = "Breakout";
-		this.ball = null;
 		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
 		this.ball = new Ball(this.gameWidth/2, this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2);
+		this.blocks = [];
+		this.collisionBlock = null;
 		this.setKeyListeners();
-		console.log(this.paddle.y);
-		console.log(this.gameHeight);
-		console.log(this.paddle.x);
+		this.setMouseListeners();
 	}
 
 	routeKeys(e){
-		console.log(this.paddle);
 		if(e.keyCode == 39) {
         	this.paddle.valueToMove = this.paddle.moveIncrement;
         	this.updatePaddle(this.paddle);
@@ -93,8 +95,19 @@ class Breakout extends Game{
     	}
 	}
 
+	followMouse(e){
+		this.ctx.clearRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+		this.paddle.x = e.pageX - this.paddle.width/2;
+		this.drawBlock(this.paddle);
+	}
+
 	setKeyListeners(){
-		window.addEventListener("keydown", this.routeKeys.bind(this), false);
+		this.addEventListener("keydown", this.routeKeys, false);
+	}
+
+	setMouseListeners(){
+		//.addEventListener("mousemove", this.followMouse.bind(this), false);
+		this.addEventListener("mousemove", this.followMouse, false);
 	}
 
 	drawBlock(block){
@@ -114,20 +127,52 @@ class Breakout extends Game{
 	}
 
 	updateBall(){
-		var isXAligned = (this.ball.x > this.paddle.x && this.ball.x < this.paddle.x + this.paddle.width);
-		var isYAligned = (this.ball.y > this.paddle.y-this.ball.moveIncrement)
+		
+
 		if(this.ball.x < 0 || this.ball.x > this.gameWidth)this.ball.dx = -this.ball.dx; // change direction if a wall is hit
 		if(this.ball.y < 0)this.ball.dy = -this.ball.dy; // change direction if a wall is hit
-		if(isXAligned && isYAligned)this.paddleHit();
+		else if(this.paddleCollision())this.paddleHit();
+		else if(this.blockCollision())this.blockHit();
 			
-		this.ctx.clearRect(this.ball.x-this.ball.radius, this.ball.y-this.ball.radius, this.ball.radius*2, this.ball.radius*2);
+		this.ctx.clearRect(this.ball.x-this.ball.radius-1, this.ball.y-this.ball.radius-1, this.ball.radius*2+1, this.ball.radius*2+1);
 		this.ball.x +=this.ball.dx;
 		this.ball.y +=this.ball.dy;
 		this.drawBall(this.ball);
 	}
 
+	paddleCollision(){
+		let isXAligned = (this.ball.x > this.paddle.x && this.ball.x < this.paddle.x + this.paddle.width);
+		let isYAligned = (this.ball.y > this.paddle.y-this.ball.moveIncrement);
+		if(isXAligned && isYAligned) return true;
+		else return false;
+	}
+
+	blockCollision(){
+		for (let [i,block] of this.blocks.entries()) {// ecma script foreach style iterator
+			
+			let isXAligned = (this.ball.x > block.x && this.ball.x < block.x + block.width);
+			let isYAligned = (this.ball.y > block.y && this.ball.y < block.y + block.height);
+			if(isXAligned && isYAligned) {
+				this.collisionBlock = i;
+				return true;
+			}
+    	
+    	}
+
+    	return false;
+	}
+
 	paddleHit(){
 		this.ball.dy = -this.ball.dy;
+	}
+
+	blockHit(){
+		let block = this.blocks[this.collisionBlock];
+		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
+		this.blocks.splice(this.collisionBlock, 1);
+		this.ball.dx = -this.ball.dx;
+		this.ball.dy = -this.ball.dy;
+		
 	}
 
 	setBallInMotion(){
@@ -149,11 +194,11 @@ class Breakout extends Game{
 
 
 	initialize(){
-		for(var i=0; i<this.gameWidth; i+=this.gameWidth/10){
-			for(var j=0; j<this.gameHeight/3; j+=this.gameHeight/10){
+		for(let i=0; i<this.gameWidth; i+=this.gameWidth/10){
+			for(let j=0; j<this.gameHeight/3; j+=this.gameHeight/10){
 
-				var block = new Block(i,j, this.gameWidth/20, this.gameHeight/30);
-				this.drawBlock(block);
+				this.blocks.push(new Block(i,j, this.gameWidth/20, this.gameHeight/30) );
+				this.drawBlock(this.blocks[this.blocks.length-1]);
 			}
 		}
 
@@ -175,6 +220,15 @@ class Madness extends Breakout{
 		this.ball.dy = -this.ball.dy;
 		this.ball.dy*=1.1;
 		this.ball.dx*=1.1;
+	}
+
+	blockHit(){
+		let block = this.blocks[this.collisionBlock];
+		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
+		this.blocks.splice(this.collisionBlock, 1);
+		this.ball.dx = -this.ball.dx;
+		this.ball.dy = -this.ball.dy;
+		
 	}
 }
 
