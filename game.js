@@ -139,6 +139,7 @@ class Breakout extends Game{
 		this.intervalId = null;
 		this.setKeyListeners();
 		this.setMouseListeners();
+		this.setTouchListeners();
 
 	}
 
@@ -176,6 +177,13 @@ class Breakout extends Game{
 		this.drawBlock(this.paddle);
 	}
 
+	followTouch(e){
+		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+		console.log(e.pageX);
+		this.paddle.x = e.pageX - this.paddle.width/2;
+		this.drawBlock(this.paddle);
+	}
+
 	setKeyListeners(){
 
 		this.addEventListener("keydown", this.routeKeys, false);
@@ -184,6 +192,10 @@ class Breakout extends Game{
 	setMouseListeners(){
 
 		this.addEventListener("mousemove", this.followMouse, false);
+	}
+
+	setTouchListeners(){
+		this.addEventListener("touchmove", this.followTouch, true);	
 	}
 
 	drawBlock(block){
@@ -354,6 +366,21 @@ class Madness extends Breakout{
 	constructor(){
 		super();
 		this.gameName = "Madness";
+		this.savedX = 3;
+		this.savedY = 3;
+	}
+
+	startBall(){
+		this.paddle = new Paddle(this.gameWidth, this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
+		this.ball = new Ball(Math.floor(Math.random()*this.gameWidth), this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2);
+		this.ball.dx = this.savedX;
+		this.ball.dy = abs(this.savedY);
+		this.setKeyListeners();
+		this.setMouseListeners();
+
+
+		this.drawBlock(this.paddle);
+		this.setBallInMotion();
 	}
 
 	paddleHit(){
@@ -363,7 +390,7 @@ class Madness extends Breakout{
 		let end = this.paddle.x + this.paddle.width;
 		
 		if(this.ball.x < this.paddle.x+this.paddle.width/2){
-			this.ball.multiplier = (this.ball.x-this.paddle.x + this.paddle.width/2)/(this.paddle.width/1.5);
+			this.ball.multiplier = (-this.ball.x + this.paddle.x + this.paddle.width)/(this.paddle.width/1.5);
 			this.ball.dx = -this.ball.moveIncrement * this.ball.multiplier;
 		}
 		else {
@@ -374,6 +401,8 @@ class Madness extends Breakout{
 		this.ball.dy = -this.ball.dy;
 		this.ball.dy *=1.1;
 		this.ball.dx *=1.1;
+		this.savedX = this.dx;
+		this.savedY = this.dy;
 	}
 
 	blockHit(){
