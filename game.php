@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>ECMA Script 6</title>
+<title>Breakout</title>
 <style>
 	body{
 		padding: 0px;
@@ -10,25 +10,16 @@
 </head>
 <body>
 <div id="stuff"></div>
-<script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="polygon.js"></script>
 <script type="text/javascript" src="game.js"></script>
 
 <script type="text/javascript">
 
-$(document).ready(function(){
+window.addEventListener("load", function(){
+
 	var breakout = new Breakout();
-	console.log(breakout.toString());
-	breakout.user.setName("Logan Saruwatari");
-	breakout.populateBlocks();
-	breakout.startBall();
-	
-	// var madness = new Madness();
-	// console.log(madness.toString());
-	// madness.user.setName("Logan Saruwatari");
-	// madness.populateBlocks();
-	// madness.startBall();
-})
+	breakout.play();
+
+}, false);
 
 
 function doStuff(){
@@ -53,9 +44,6 @@ function doStuff(){
 		}
 		
 	}
-
-
-
 }
 
 </script>
