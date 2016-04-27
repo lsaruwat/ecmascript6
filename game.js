@@ -14,8 +14,6 @@ class Block{
 	toString(){
 		return "Block";
 	}
-
-
 }
 
 class Paddle extends Block{
@@ -30,8 +28,6 @@ class Paddle extends Block{
 	toString(){
 		return "Paddle";
 	}
-
-
 }
 
 class PowerupBlock extends Block{
@@ -74,10 +70,7 @@ class Ball{
 		//sin(angle*(pi/180))*velocity
 		this.radians = Math.cos(this.angle*(Math.PI / 180) ) * this.dy/this.dx;
 	}
-
-
 }
-
 
 class User{
 	
@@ -134,7 +127,6 @@ class Game {
   addEventListener(domEvent, functionRef, bubbles=false){
   	window.addEventListener(domEvent, functionRef.bind(this), bubbles);
   }
-
 }
 
 class Breakout extends Game{
@@ -355,7 +347,6 @@ class Breakout extends Game{
 		this.ball.y = 0;
 		location.reload();
 	}
-
 }
 
 class Madness extends Breakout{
@@ -474,10 +465,6 @@ class BreakoutPlus extends Breakout{
 		this.resetPaddle();
 		this.play();
 	}
-
-
-
-
 }
 
 
