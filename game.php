@@ -25,7 +25,9 @@ $(document).ready(function(){
 	
 	// var madness = new Madness();
 	// console.log(madness.toString());
-	// madness.initialize();
+	// madness.user.setName("Logan Saruwatari");
+	// madness.populateBlocks();
+	// madness.startBall();
 })
 
 

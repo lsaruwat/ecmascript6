@@ -179,11 +179,11 @@ class Breakout extends Game{
 		if(this.ball.x < 0 || this.ball.x > this.gameWidth)this.ball.dx = -this.ball.dx; // change direction if a wall is hit
 		if(this.ball.y < 0)this.ball.dy = -this.ball.dy; // change direction if a wall is hit
 		
-		else if(this.paddleCollision())this.paddleHit();
+		else if(this.paddleCollision()){
+			this.paddleHit();
+		}
 		
 		else if(this.blockCollision()){
-			this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
-			this.drawBlock(this.paddle);
 			this.blockHit();
 		}
 
@@ -193,12 +193,15 @@ class Breakout extends Game{
 		this.ball.x +=this.ball.dx;
 		this.ball.y +=this.ball.dy;
 		this.drawBall(this.ball);
+		
 		this.updateText();
+		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+		this.drawBlock(this.paddle);
 	}
 
 	paddleCollision(){
 		let isXAligned = (this.ball.x > this.paddle.x && this.ball.x < this.paddle.x + this.paddle.width);
-		let isYAligned = (this.ball.y > this.paddle.y-this.ball.moveIncrement);
+		let isYAligned = (this.ball.y + this.ball.radius > this.paddle.y);
 		if(isXAligned && isYAligned) return true;
 		else return false;
 	}
@@ -223,7 +226,6 @@ class Breakout extends Game{
 		let middle  = this.paddle.x+this.paddle.width/2;
 		let begin  = this.paddle.x;
 		let end = this.paddle.x + this.paddle.width;
-		 //- (middle - begin);
 		
 		if(this.ball.x < this.paddle.x+this.paddle.width/2){
 			this.ball.multiplier = (this.ball.x-this.paddle.x + this.paddle.width/2)/(this.paddle.width/1.5);
@@ -274,16 +276,16 @@ class Breakout extends Game{
 
 	die(){
 		if(this.user.lives > 0){
-
-		this.user.addLives(-1);
-		this.removeInterval();
-		this.startBall();
+			this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+			this.user.addLives(-1);
+			this.removeInterval();
+			this.startBall();
 		}
 		else this.lost();
 	}
 
 	startBall(){
-		this.paddle = new Paddle(this.gameWidth/2,this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
+		this.paddle = new Paddle(this.gameWidth, this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
 		this.ball = new Ball(Math.floor(Math.random()*this.gameWidth), this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2);
 		this.setKeyListeners();
 		this.setMouseListeners();
@@ -294,6 +296,7 @@ class Breakout extends Game{
 	}
 
 	populateBlocks(color="green"){
+		this.ctx.clearRect(0,0,this.gameWidth, this.gameHeight);
 		for(let i=0; i<this.gameWidth; i+=this.gameWidth/20){
 			for(let j=this.gameHeight/10; j<this.gameHeight/3; j+=this.gameHeight/20){
 
@@ -304,14 +307,14 @@ class Breakout extends Game{
 	}
 
 	won(){
-		window.alert("Congratulations " + this.user.name);
+		this.user.lives +=1;
 		this.removeInterval();
 		this.populateBlocks();
 		this.startBall();
 	}
 
 	lost(){
-		window.alert("Game Over " + this.user.name + " lives " + this.user.lives);
+		window.alert("Game Over " + this.user.name + " score " + this.user.score);
 		this.ball.y = 0;
 		location.reload();
 	}
@@ -326,35 +329,35 @@ class Madness extends Breakout{
 	}
 
 	paddleHit(){
+
 		let middle  = this.paddle.x+this.paddle.width/2;
 		let begin  = this.paddle.x;
 		let end = this.paddle.x + this.paddle.width;
-		this.ball.multiplier = this.paddle.width / (middle - begin);
 		
 		if(this.ball.x < this.paddle.x+this.paddle.width/2){
+			this.ball.multiplier = (this.ball.x-this.paddle.x + this.paddle.width/2)/(this.paddle.width/1.5);
 			this.ball.dx = -this.ball.moveIncrement * this.ball.multiplier;
 		}
 		else {
+			this.ball.multiplier = (this.ball.x-this.paddle.x)/(this.paddle.width/1.5);
 			this.ball.dx = this.ball.moveIncrement * this.ball.multiplier;
 		}
 
 		this.ball.dy = -this.ball.dy;
-		
-		this.ball.dy*=1.1;
-		this.ball.dx*=1.1;
+		this.ball.dy *=1.1;
+		this.ball.dx *=1.1;
 	}
 
 	blockHit(){
+		this.user.score +=1;
 		let block = this.blocks[this.collisionBlock];
 		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
 		this.blocks.splice(this.collisionBlock, 1);
-		//this.ball.dx = -this.ball.dx;
 		this.ball.dy = -this.ball.dy;
 
 		if(this.blocks.length <= 0){
-			this.gameover();
-		}
-		
+			this.won();
+		}	
 	}
 }
 
