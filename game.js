@@ -2,7 +2,7 @@
 
 class Block{
 	
-	constructor(x, y, width, height, color="green"){
+	constructor(x, y, width, height, color="orange"){
 		this.width = width;
 		this.height = height;
 		this.color = color;
@@ -39,6 +39,17 @@ class PowerupBlock extends Block{
 
 	toString(){
 		return "PowerupBlock";
+	}
+}
+
+class BallBlock extends Block{
+
+	constructor(x, y, width, height, color="pink"){
+		super(x, y, width, height, color);
+	}
+
+	toString(){
+		return "BallBlock";
 	}
 }
 
@@ -137,6 +148,7 @@ class Breakout extends Game{
 		this.blocks = [];
 		this.collisionBlock = null;
 		this.intervalId = null;
+		this.paused = false;
 		this.setKeyListeners();
 		this.setMouseListeners();
 		this.setTouchListeners();
@@ -146,6 +158,18 @@ class Breakout extends Game{
 	play(){
 		this.populateBlocks();
 		this.startBall();
+	}
+
+	pause(){
+		console.log("paused");
+		this.removeInterval();
+		this.paused = true;
+	}
+
+	unpause(){
+		console.log("unpaused");
+		this.setBallInMotion();
+		this.paused = false;
 	}
 
 	setCanvasText(family, size){
@@ -161,13 +185,24 @@ class Breakout extends Game{
 	}
 
 	routeKeys(e){
-		if(e.keyCode == 39) {
+		if(e.keyCode == 39) { //right arrow key
         	this.paddle.valueToMove = this.paddle.moveIncrement;
         	this.updatePaddle(this.paddle);
     	}
-    	else if(e.keyCode == 37) {
+    	else if(e.keyCode == 37) {//left arrow key
         	this.paddle.valueToMove = -this.paddle.moveIncrement;
         	this.updatePaddle(this.paddle);
+    	}
+    	else if(e.keyCode == 32){ //space bar
+    		if(!this.paused){
+    			this.pause();
+    		}
+    	}
+
+    	else if(e.keyCode == 13){
+    		if(this.paused){
+    			this.unpause();
+    		}
     	}
 	}
 
@@ -195,7 +230,8 @@ class Breakout extends Game{
 	}
 
 	setTouchListeners(){
-		this.addEventListener("touchmove", this.followTouch, true);	
+		//this.addEventListener("touchstart", this.touchStart, false);
+		this.addEventListener("touchmove", this.followTouch, false);	
 	}
 
 	drawBlock(block){
@@ -374,7 +410,7 @@ class Madness extends Breakout{
 		this.paddle = new Paddle(this.gameWidth, this.gameHeight-20, this.gameWidth/10, 20, this.gameWidth/20);
 		this.ball = new Ball(Math.floor(Math.random()*this.gameWidth), this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2);
 		this.ball.dx = this.savedX;
-		this.ball.dy = abs(this.savedY);
+		if(this.ball.dy > 3) this.ball.dy = -Math.abs(this.savedY)/2;
 		this.setKeyListeners();
 		this.setMouseListeners();
 
@@ -401,8 +437,8 @@ class Madness extends Breakout{
 		this.ball.dy = -this.ball.dy;
 		this.ball.dy *=1.1;
 		this.ball.dx *=1.1;
-		this.savedX = this.dx;
-		this.savedY = this.dy;
+		this.savedX = this.ball.dx;
+		this.savedY = this.ball.dy;
 	}
 
 	blockHit(){
@@ -433,6 +469,11 @@ class BreakoutPlus extends Breakout{
 		this.paddleSize = this.gameWidth/20;
 	}
 
+	setBallInMotion(ball){
+
+		this.intervalId = window.setInterval(this.updateBall.bind(this, ball), 10);
+	}
+
 	startBall(){
 		this.paddle = new Paddle(this.gameWidth/2, this.gameHeight-20, this.paddleSize, 20, this.gameWidth/20);
 		this.ball = new Ball(Math.floor(Math.random()*this.gameWidth), this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2,this.ballVelocity);
@@ -442,6 +483,32 @@ class BreakoutPlus extends Breakout{
 
 		this.drawBlock(this.paddle);
 		this.setBallInMotion();
+	}
+
+	updateBall(ball = this.ball){
+		
+
+		if(ball.x < 0 || ball.x > this.gameWidth)ball.dx = -ball.dx; // change direction if a wall is hit
+		if(ball.y < 0)ball.dy = -ball.dy; // change direction if a wall is hit
+		
+		else if(this.paddleCollision()){
+			this.paddleHit();
+		}
+		
+		else if(this.blockCollision()){
+			this.blockHit();
+		}
+
+		else if(ball.y -ball.radius > this.gameHeight)this.die();
+			
+		this.ctx.clearRect(ball.x-ball.radius-1, ball.y-ball.radius-1, ball.radius*2+2, ball.radius*2+2);
+		ball.x +=ball.dx;
+		ball.y +=ball.dy;
+		this.drawBall(ball);
+		
+		this.updateText();
+		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+		this.drawBlock(this.paddle);
 	}
 
 	populateBlocks(){
@@ -456,6 +523,10 @@ class BreakoutPlus extends Breakout{
 
 				else if(Math.floor(Math.random()*5) === 1){
 					this.blocks.push(new PenaltyBlock(i,j,this.gameWidth/30, this.gameHeight/50));
+				}
+
+				else if(Math.floor(Math.random()*5) === 2){
+					this.blocks.push(new BallBlock(i,j,this.gameWidth/30, this.gameHeight/50));
 				}
 
 				else this.blocks.push(new Block(i,j, this.gameWidth/30, this.gameHeight/50) );
@@ -478,6 +549,10 @@ class BreakoutPlus extends Breakout{
 			if(this.ball.moveIncrement <= this.maxVelocity)this.ball.moveIncrement *= block.penalty;
 			this.ballVelocity = this.ball.moveIncrement;
 			console.log(this.ballVelocity);
+		}
+		else if(block.toString() == "BallBlock"){
+			this.ball2 = new Ball(block.x, block.y, 10, 0, Math.PI*2,this.ballVelocity);
+			this.setBallInMotion(this.ball2);
 		}
 		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
 		this.blocks.splice(this.collisionBlock, 1);
