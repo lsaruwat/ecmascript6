@@ -2,7 +2,7 @@
 
 class Block{
 	
-	constructor(x, y, width, height, color="orange"){
+	constructor(x, y, width, height, color="green"){
 		this.width = width;
 		this.height = height;
 		this.color = color;
@@ -77,9 +77,15 @@ class Ball{
 		this.moveIncrement = moveIncrement;
 		this.dx = this.moveIncrement;
 		this.dy = -this.moveIncrement;
-		//cos(angle*(pi/180))*velocity
-		//sin(angle*(pi/180))*velocity
-		this.radians = Math.cos(this.angle*(Math.PI / 180) ) * this.dy/this.dx;
+		this.intervalId = null;
+	}
+
+	setColor(color){
+		this.color = color;
+	}
+
+	getColor(){
+		return this.color;
 	}
 }
 
@@ -162,13 +168,13 @@ class Breakout extends Game{
 
 	pause(){
 		console.log("paused");
-		this.removeInterval();
+		this.removeInterval(ball);
 		this.paused = true;
 	}
 
 	unpause(){
 		console.log("unpaused");
-		this.setBallInMotion();
+		this.setBallInMotion(ball);
 		this.paused = false;
 	}
 
@@ -213,10 +219,21 @@ class Breakout extends Game{
 	}
 
 	followTouch(e){
-		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
-		console.log(e.pageX);
-		this.paddle.x = e.pageX - this.paddle.width/2;
-		this.drawBlock(this.paddle);
+		// this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+		// console.log(e.pageX);
+		// this.paddle.x = e.pageX - this.paddle.width/2;
+		// this.drawBlock(this.paddle);
+		let mouseEvent = new MouseEvent("mousemove", {
+		    clientX: touch.clientX,
+		    clientY: touch.clientY
+		  });
+		this.canvas.dispatchEvent(mouseEvent);
+	}
+
+	touchStart(e){
+		console.log("touched");
+		this.followTouch();
+		e.preventDefault();
 	}
 
 	setKeyListeners(){
@@ -230,7 +247,7 @@ class Breakout extends Game{
 	}
 
 	setTouchListeners(){
-		//this.addEventListener("touchstart", this.touchStart, false);
+		this.addEventListener("touchstart", this.followTouch, false);
 		this.addEventListener("touchmove", this.followTouch, false);	
 	}
 
@@ -250,44 +267,44 @@ class Breakout extends Game{
 	    this.ctx.closePath();
 	}
 
-	updateBall(){
+	updateBall(ball){
 		
 
-		if(this.ball.x < 0 || this.ball.x > this.gameWidth)this.ball.dx = -this.ball.dx; // change direction if a wall is hit
-		if(this.ball.y < 0)this.ball.dy = -this.ball.dy; // change direction if a wall is hit
+		if(ball.x < 0 || ball.x > this.gameWidth)ball.dx = -ball.dx; // change direction if a wall is hit
+		if(ball.y < 0)ball.dy = -ball.dy; // change direction if a wall is hit
 		
-		else if(this.paddleCollision()){
-			this.paddleHit();
+		else if(this.paddleCollision(ball)){
+			this.paddleHit(ball);
 		}
 		
-		else if(this.blockCollision()){
-			this.blockHit();
+		else if(this.blockCollision(ball)){
+			this.blockHit(ball);
 		}
 
-		else if(this.ball.y -this.ball.radius > this.gameHeight)this.die();
+		else if(ball.y -ball.radius > this.gameHeight)this.die(ball);
 			
-		this.ctx.clearRect(this.ball.x-this.ball.radius-1, this.ball.y-this.ball.radius-1, this.ball.radius*2+2, this.ball.radius*2+2);
-		this.ball.x +=this.ball.dx;
-		this.ball.y +=this.ball.dy;
-		this.drawBall(this.ball);
+		this.ctx.clearRect(ball.x-ball.radius-1, ball.y-ball.radius-1, ball.radius*2+2, ball.radius*2+2);
+		ball.x +=ball.dx;
+		ball.y +=ball.dy;
+		this.drawBall(ball);
 		
 		this.updateText();
 		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
 		this.drawBlock(this.paddle);
 	}
 
-	paddleCollision(){
-		let isXAligned = (this.ball.x > this.paddle.x && this.ball.x < this.paddle.x + this.paddle.width);
-		let isYAligned = (this.ball.y + this.ball.radius > this.paddle.y);
+	paddleCollision(ball){
+		let isXAligned = (ball.x > this.paddle.x && ball.x < this.paddle.x + this.paddle.width);
+		let isYAligned = (ball.y + ball.radius > this.paddle.y);
 		if(isXAligned && isYAligned) return true;
 		else return false;
 	}
 
-	blockCollision(){
+	blockCollision(ball){
 		for (let [i,block] of this.blocks.entries()) {// ecma script foreach style iterator
 			
-			let isXAligned = (this.ball.x+this.ball.radius > block.x && this.ball.x-this.ball.radius < block.x + block.width);
-			let isYAligned = (this.ball.y+this.ball.radius > block.y && this.ball.y-this.ball.radius < block.y + block.height);
+			let isXAligned = (ball.x+ball.radius > block.x && ball.x-ball.radius < block.x + block.width);
+			let isYAligned = (ball.y+ball.radius > block.y && ball.y-ball.radius < block.y + block.height);
 			if(isXAligned && isYAligned) {
 				this.collisionBlock = i;
 				return true;
@@ -298,44 +315,44 @@ class Breakout extends Game{
     	return false;
 	}
 
-	paddleHit(){
+	paddleHit(ball){
 
 		let middle  = this.paddle.x+this.paddle.width/2;
 		let begin  = this.paddle.x;
 		let end = this.paddle.x + this.paddle.width;
 		
-		if(this.ball.x < this.paddle.x+this.paddle.width/2){
-			this.ball.multiplier = (-this.ball.x + this.paddle.x + this.paddle.width)/(this.paddle.width/1.5);
-			this.ball.dx = -this.ball.moveIncrement * this.ball.multiplier;
+		if(ball.x < this.paddle.x+this.paddle.width/2){
+			ball.multiplier = (-ball.x + this.paddle.x + this.paddle.width)/(this.paddle.width/1.5);
+			ball.dx = -ball.moveIncrement * ball.multiplier;
 		}
 		else {
-			this.ball.multiplier = (this.ball.x-this.paddle.x)/(this.paddle.width/1.5);
-			this.ball.dx = this.ball.moveIncrement * this.ball.multiplier;
+			ball.multiplier = (ball.x-this.paddle.x)/(this.paddle.width/1.5);
+			ball.dx = ball.moveIncrement * ball.multiplier;
 		}
 
-		this.ball.dy = -this.ball.dy;
+		ball.dy = -ball.dy;
 	}
 
-	blockHit(){
+	blockHit(ball){
 		this.user.score +=1;
 		let block = this.blocks[this.collisionBlock];
 		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
 		this.blocks.splice(this.collisionBlock, 1);
-		this.ball.dy = -this.ball.dy;
+		ball.dy = -ball.dy;
 
 		if(this.blocks.length <= 0){
-			this.won();
+			this.won(ball);
 		}	
 	}
 
-	setBallInMotion(){
+	setBallInMotion(ball){
 
-		this.intervalId = window.setInterval(this.updateBall.bind(this), 10);
+		ball.intervalId = window.setInterval(this.updateBall.bind(this,ball), 10);
 	}
 
-	removeInterval(){
+	removeInterval(ball){
 		//remove the interval so we can rebind on restart
-		window.clearInterval(this.intervalId);
+		window.clearInterval(ball.intervalId);
 	}
 
 	updatePaddle(){
@@ -351,11 +368,11 @@ class Breakout extends Game{
 
 	}
 
-	die(){
+	die(ball){
 		if(this.user.lives > 0){
 			this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
 			this.user.addLives(-1);
-			this.removeInterval();
+			this.removeInterval(ball);
 			this.startBall();
 		}
 		else this.lost();
@@ -369,7 +386,7 @@ class Breakout extends Game{
 
 
 		this.drawBlock(this.paddle);
-		this.setBallInMotion();
+		this.setBallInMotion(this.ball);
 	}
 
 	populateBlocks(color="green"){
@@ -383,9 +400,9 @@ class Breakout extends Game{
 		}
 	}
 
-	won(){
+	won(ball){
 		this.user.lives +=1;
-		this.removeInterval();
+		this.removeInterval(ball);
 		this.populateBlocks();
 		this.startBall();
 	}
@@ -416,7 +433,7 @@ class Madness extends Breakout{
 
 
 		this.drawBlock(this.paddle);
-		this.setBallInMotion();
+		this.setBallInMotion(this.ball);
 	}
 
 	paddleHit(){
@@ -439,6 +456,7 @@ class Madness extends Breakout{
 		this.ball.dx *=1.1;
 		this.savedX = this.ball.dx;
 		this.savedY = this.ball.dy;
+		this.ball.moveIncrement = Math.abs(this.ball.dx);
 	}
 
 	blockHit(){
@@ -449,67 +467,53 @@ class Madness extends Breakout{
 		this.ball.dy = -this.ball.dy;
 
 		if(this.blocks.length <= 0){
-			this.won();
+			this.won(ball);
 		}	
 	}
 }
-
 
 class BreakoutPlus extends Breakout{
 
 	constructor(){
 		super();
 		this.gameName = "Breakout Plus";
+		this.balls = [];
 		this.paddleSize = this.gameWidth/20;
 		this.ballVelocity = 3;
 		this.maxVelocity = 10;
+	}
+
+	pause(){
+		for (let [i,ball] of this.balls.entries()) {
+			this.removeInterval(ball);
+		}
+		this.paused = true;
+	}
+
+	unpause(){
+		for (let [i,ball] of this.balls.entries()) {
+			this.setBallInMotion(ball);
+		}
+		this.paused = false;
 	}
 
 	resetPaddle(){
 		this.paddleSize = this.gameWidth/20;
 	}
 
-	setBallInMotion(ball){
-
-		this.intervalId = window.setInterval(this.updateBall.bind(this, ball), 10);
-	}
-
 	startBall(){
 		this.paddle = new Paddle(this.gameWidth/2, this.gameHeight-20, this.paddleSize, 20, this.gameWidth/20);
 		this.ball = new Ball(Math.floor(Math.random()*this.gameWidth), this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2,this.ballVelocity);
+		this.ball.setColor("magenta");
+		this.balls.push(this.ball);
 		this.setKeyListeners();
 		this.setMouseListeners();
 
 
 		this.drawBlock(this.paddle);
-		this.setBallInMotion();
+		this.setBallInMotion(this.ball);
 	}
 
-	updateBall(ball = this.ball){
-		
-
-		if(ball.x < 0 || ball.x > this.gameWidth)ball.dx = -ball.dx; // change direction if a wall is hit
-		if(ball.y < 0)ball.dy = -ball.dy; // change direction if a wall is hit
-		
-		else if(this.paddleCollision()){
-			this.paddleHit();
-		}
-		
-		else if(this.blockCollision()){
-			this.blockHit();
-		}
-
-		else if(ball.y -ball.radius > this.gameHeight)this.die();
-			
-		this.ctx.clearRect(ball.x-ball.radius-1, ball.y-ball.radius-1, ball.radius*2+2, ball.radius*2+2);
-		ball.x +=ball.dx;
-		ball.y +=ball.dy;
-		this.drawBall(ball);
-		
-		this.updateText();
-		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
-		this.drawBlock(this.paddle);
-	}
 
 	populateBlocks(){
 		this.ctx.clearRect(0,0,this.gameWidth, this.gameHeight);
@@ -536,7 +540,7 @@ class BreakoutPlus extends Breakout{
 	}
 
 
-	blockHit(){
+	blockHit(ball){
 
 		this.user.score +=1;
 		let block = this.blocks[this.collisionBlock];
@@ -546,21 +550,41 @@ class BreakoutPlus extends Breakout{
 			if(this.paddleSize >= this.gameWidth)this.beatGame();
 		}
 		else if(block.toString() == "PenaltyBlock"){
-			if(this.ball.moveIncrement <= this.maxVelocity)this.ball.moveIncrement *= block.penalty;
-			this.ballVelocity = this.ball.moveIncrement;
+			if(ball.moveIncrement <= this.maxVelocity)ball.moveIncrement *= block.penalty;
+			this.ballVelocity = ball.moveIncrement;
 			console.log(this.ballVelocity);
 		}
 		else if(block.toString() == "BallBlock"){
-			this.ball2 = new Ball(block.x, block.y, 10, 0, Math.PI*2,this.ballVelocity);
-			this.setBallInMotion(this.ball2);
+			this.balls.push(new Ball(block.x, block.y, 10, 0, Math.PI*2,this.ballVelocity));
+			this.setBallInMotion(this.balls[this.balls.length-1]);
 		}
 		this.ctx.clearRect(block.x-1, block.y-1, block.width+2, block.height+2);
 		this.blocks.splice(this.collisionBlock, 1);
-		this.ball.dy = -this.ball.dy;
+		ball.dy = -ball.dy;
 
 		if(this.blocks.length <= 0){
-			this.won();
+			this.won(ball);
 		}	
+	}
+
+	die(ball){
+		if(this.user.lives > 0){
+			if(ball.getColor() === "magenta"){
+			this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+			this.startBall();
+			this.user.addLives(-1);
+			}
+			
+			this.removeInterval(ball);
+		}
+		else this.lost();
+	}
+
+	won(ball){
+		this.user.lives +=1;
+		this.removeInterval(ball);
+		this.populateBlocks();
+		this.startBall();
 	}
 
 
