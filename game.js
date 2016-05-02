@@ -219,21 +219,16 @@ class Breakout extends Game{
 	}
 
 	followTouch(e){
-		// this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
-		// console.log(e.pageX);
-		// this.paddle.x = e.pageX - this.paddle.width/2;
-		// this.drawBlock(this.paddle);
-		let mouseEvent = new MouseEvent("mousemove", {
-		    clientX: touch.clientX,
-		    clientY: touch.clientY
-		  });
-		this.canvas.dispatchEvent(mouseEvent);
+		e.preventDefault();
+		this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
+		this.paddle.x = e.touches[0].clientX - this.paddle.width/2;
+		this.drawBlock(this.paddle);
+		
 	}
 
 	touchStart(e){
-		console.log("touched");
-		this.followTouch();
 		e.preventDefault();
+		console.log("touched");
 	}
 
 	setKeyListeners(){
@@ -247,7 +242,7 @@ class Breakout extends Game{
 	}
 
 	setTouchListeners(){
-		this.addEventListener("touchstart", this.followTouch, false);
+		this.addEventListener("touchstart", this.touchStart, false);
 		this.addEventListener("touchmove", this.followTouch, false);	
 	}
 
