@@ -123,7 +123,7 @@ class Game {
 		this.dom = document.getElementsByTagName("html")[0];
 		
 		if(window.innerWidth < 1000){
-			this.gameHeight = window.innerHeight - 100;
+			this.gameHeight = window.innerHeight - 150;
 		}
 		else this.gameHeight = window.innerHeight;
 		
