@@ -18,7 +18,7 @@ class Block{
 
 class Paddle extends Block{
 
-	constructor(x,y,width,height, moveIncrement, color="purple"){
+	constructor(x,y,width,height, moveIncrement, color="#008EF8"){
 		super(x,y,width,height, color);
 		this.moveIncrement = moveIncrement;
 		this.valueToMove = 0; //this gets changed based on arrow keys to either a positive or negative amount
@@ -44,7 +44,7 @@ class PowerupBlock extends Block{
 
 class BallBlock extends Block{
 
-	constructor(x, y, width, height, color="pink"){
+	constructor(x, y, width, height, color="blue"){
 		super(x, y, width, height, color);
 	}
 
@@ -395,8 +395,13 @@ class Breakout extends Game{
 		}
 	}
 
+	clearCanvas(){
+		this.ctx.clearRect(0,0,this.gameWidth, this.gameHeight);
+	}
+
 	won(ball){
 		this.user.lives +=1;
+		this.ball.y = -100;
 		this.removeInterval(ball);
 		this.populateBlocks();
 		this.startBall();
@@ -499,7 +504,7 @@ class BreakoutPlus extends Breakout{
 	startBall(){
 		this.paddle = new Paddle(this.gameWidth/2, this.gameHeight-20, this.paddleSize, 20, this.gameWidth/20);
 		this.ball = new Ball(Math.floor(Math.random()*this.gameWidth), this.gameHeight-this.paddle.height-11, 10, 0, Math.PI*2,this.ballVelocity);
-		this.ball.setColor("magenta");
+		this.ball.setColor("black");
 		this.balls.push(this.ball);
 		this.setKeyListeners();
 		this.setMouseListeners();
@@ -524,7 +529,7 @@ class BreakoutPlus extends Breakout{
 					this.blocks.push(new PenaltyBlock(i,j,this.gameWidth/30, this.gameHeight/50));
 				}
 
-				else if(Math.floor(Math.random()*5) === 2){
+				else if(Math.floor(Math.random()*15) === 1){
 					this.blocks.push(new BallBlock(i,j,this.gameWidth/30, this.gameHeight/50));
 				}
 
@@ -564,7 +569,7 @@ class BreakoutPlus extends Breakout{
 
 	die(ball){
 		if(this.user.lives > 0){
-			if(ball.getColor() === "magenta"){
+			if(ball.getColor() === "black"){
 			this.ctx.clearRect(this.paddle.x-1, this.paddle.y-1, this.paddle.width+2, this.paddle.height+2);
 			this.startBall();
 			this.user.addLives(-1);
@@ -577,7 +582,9 @@ class BreakoutPlus extends Breakout{
 
 	won(ball){
 		this.user.lives +=1;
+		this.ball.y = -100;
 		this.removeInterval(ball);
+		this.clearCanvas();
 		this.populateBlocks();
 		this.startBall();
 	}
