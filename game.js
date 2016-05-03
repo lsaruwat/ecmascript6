@@ -545,7 +545,7 @@ class BreakoutPlus extends Breakout{
 					this.blocks.push(new PenaltyBlock(i,j,this.gameWidth/30, this.gameHeight/50));
 				}
 
-				else if(Math.floor(Math.random()*2) === 1){
+				else if(Math.floor(Math.random()*20) === 1){
 					this.blocks.push(new BallBlock(i,j,this.gameWidth/30, this.gameHeight/50));
 				}
 
