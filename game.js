@@ -161,10 +161,11 @@ class Game {
 	}
 }
 
+
 class Breakout extends Game{
 	
 	constructor(){
-		super(); // call the next level up constructor
+		super(); // call Tthe next level up constructor
 		this.gameName = "Breakout";
 		this.blocks = [];
 		this.collisionBlock = null;
@@ -494,7 +495,7 @@ class BreakoutPlus extends Breakout{
 		this.gameName = "Breakout Plus";
 		this.balls = [];
 		this.paddleSize = this.gameWidth/20;
-		this.ballVelocity = 3;
+		this.ballVelocity = 4;
 		this.maxVelocity = 10;
 	}
 
@@ -544,7 +545,7 @@ class BreakoutPlus extends Breakout{
 					this.blocks.push(new PenaltyBlock(i,j,this.gameWidth/30, this.gameHeight/50));
 				}
 
-				else if(Math.floor(Math.random()*15) === 1){
+				else if(Math.floor(Math.random()*2) === 1){
 					this.blocks.push(new BallBlock(i,j,this.gameWidth/30, this.gameHeight/50));
 				}
 
@@ -562,7 +563,7 @@ class BreakoutPlus extends Breakout{
 		if(block.toString() == "PowerupBlock"){
 			this.paddle.width += block.value;
 			this.paddleSize = this.paddle.width; //save the paddle width for next levels
-			if(this.paddleSize >= this.gameWidth)this.beatGame();
+			if(this.paddleSize >= this.gameWidth)this.beatGame(ball);
 		}
 		else if(block.toString() == "PenaltyBlock"){
 			if(ball.moveIncrement <= this.maxVelocity)ball.moveIncrement *= block.penalty;
@@ -595,20 +596,11 @@ class BreakoutPlus extends Breakout{
 		else this.lost();
 	}
 
-	won(ball){
-		this.user.lives +=1;
-		this.ball.y = -100;
-		this.removeInterval(ball);
-		this.clearCanvas();
-		this.populateBlocks();
-		this.startBall();
-	}
 
-
-	beatGame(){
-		window.alert("YOU WON GAME OVER");
+	beatGame(ball){
 		this.resetPaddle();
-		this.play();
+		window.alert("YOU WON GAME OVER");
+		location.reload();
 	}
 }
 
